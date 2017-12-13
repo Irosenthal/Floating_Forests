@@ -53,14 +53,24 @@ corner_parse <- function(scene){
                          V1 == "PRODUCT_LR_CORNER_MAPX"| 
                          V1 == "PRODUCT_LR_CORNER_MAPY"|
                          V1 == "UTM_ZONE"|
-                         V1 == "ZONE_NUMBER")
+                         V1 == "ZONE_NUMBER"|
+                         V1 == "DATE_ACQUIRED"|
+                         V1 == "ACQUISITION_DATE"|
+                         V1 == "SPACECRAFT_ID"|
+                         V1 == "WRS_ROW"|
+                         V1 == "ENDING_ROW"|
+                         V1 == "WRS_PATH")
     coords <- coords[,3]
 }
 ######
 #run it on all rows and rename columns to be meaningful
 parsed_coords <- as.data.frame(lapply(scenes$scene, corner_parse))
 parsed_coords <- as.data.frame(t(parsed_coords))
-colnames(parsed_coords) <- c("CORNER_UL_LAT_PRODUCT",
+colnames(parsed_coords) <- c("SPACECRAFT_ID",
+                             "WRS_PATH",
+                             "WRS_ROW",
+                             "DATE_ACQUIRED",
+                             "CORNER_UL_LAT_PRODUCT",
                              "CORNER_UL_LON_PRODUCT",
                              "CORNER_UR_LAT_PRODUCT",
                              "CORNER_UR_LON_PRODUCT",
@@ -89,8 +99,13 @@ scenes_trimmed <- as.data.frame(str_sub(correct_metadata_from_MTLs$scene, end = 
 correct_metadata_from_MTLs <- cbind(scenes_trimmed, correct_metadata_from_MTLs)
 colnames(correct_metadata_from_MTLs)[1] <- "scene_trimmed"
 correct_metadata_from_MTLs <- correct_metadata_from_MTLs %>%
-    select(-scene)
+    dplyr::select(-scene)
 colnames(correct_metadata_from_MTLs)[1] <- "scene"
 
+correct_metadata_from_MTLs <- correct_metadata_from_MTLs %>%
+    tidyr::unite("path_row", c(WRS_PATH, WRS_ROW), remove = FALSE )
 
 write_csv(correct_metadata_from_MTLs, "../data/products/scene_metadata.csv")
+write_csv(correct_metadata_from_MTLs, "../data/products/scene_metadata.csv")
+#attach these to the classifications
+classifications <- read_csv("../data/prouducts")

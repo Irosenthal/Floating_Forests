@@ -11,7 +11,8 @@ subjects <- read_csv("../data/products/subjects_master.csv")
 subjects_tidy <- subjects %>%
   select(scene,
          classification_count,
-         zooniverse_id, 
+         zooniverse_id,
+         metadata.timestamp,
          upper_left_row,
          upper_left_col,
          tile_upper_left_x_UTM,
@@ -30,6 +31,10 @@ subjects_tidy <- subjects %>%
          tile_upper_right_y_LL,
          tile_lower_right_x_LL,
          tile_lower_right_y_LL)
+
+subjects_tidy <- subjects_tidy %>%
+  mutate(DATE_ACQUIRED = as_date(metadata.timestamp))
+sub_head <- head(subjects_tidy)
 
 
 #get rid of old bad coordinates

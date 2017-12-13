@@ -3,29 +3,27 @@ library(R.matlab)
 library(rgdal)
 library(readr)
 library(dplyr)
-
+library(beepr)
 
 #First, create a dataframe to nest spatial poly data frames in
-
 classifications <- read_csv("../data/products/classifications_master.csv")
-subjects <- read_csv("../data/products/subjects_master.csv")
-#so it plays nice with FFmethods_fix, streamline this in the future
+beep(1)
+subjects <- read_csv("../data/products/subjects_master.csv") 
+beep(1)
+scene_meta <- read_csv("../data/products/scene_metadata.csv") 
+beep(1)
+
+#so it plays nice with some functions  FFmethods_fix, streamline this in the future
+#remnant from old pipeline
 scene_with_FF_UTM <- subjects
 
-
-classifications <- classifications %>%
- dplyr::select(subject_zooniverse_id, upper_right_x_utm, upper_right_y_utm, lower_left_x_utm, lower_left_y_utm)
-
-
-
-#need to clean up classifications data table by removing any NA coordinates
 
 # for playing with 1 scene at a time
 classifications <- filter(classifications, as.character(scene) == "LE70440351999204EDC01")
 
 
 
-#remove any rows that have NAs, these are invalid and just trip the code up
+#remove any rows that have NAs
 classifications_clean <- rm_na(classifications, "relPath")
 classifications_clean <- rm_na(classifications_clean, "startingPoint_x")
 classifications_clean <- rm_na(classifications_clean, "startingPoint_y")
@@ -39,36 +37,25 @@ classifications_clean <- rm_na(classifications_clean, "lower_left_x")
 classifications_clean <- rm_na(classifications_clean, "lower_left_y")
 
 
-#classifications_clean <- mutate(classifications_clean, subject_zooniverse_id = subject_zooniverse_id.x)
-
-
-
-
 #make a dataframe where each image has its classification data nested within it
-#run get spatial polys on those nested dataframe
 
 nested_classifications <- split(classifications_clean , f = classifications_clean$subject_zooniverse_id)
 
-#now lapply
-
+#now lapply to convert to SPDFS
+#This is where you need a subject table called scene_with_FF_UTM
 sp_classifications_list <- lapply(nested_classifications, getSpatialPolysDataFrameForOneImage)
 #saveRDS(sp_classifications_list, "../data/intermediates/nested_classifications_spatial")
 
-#sp_classifications_list <- lapply(sp_classifications_list, spTransform(CRS("+proj=longlat +datum=WGS84")))
-
-
-
-
-#load the SBCC data and reprocess into a SpatialPoints object
-#this is the same as Oneimage
-caKelp <- readMat("../data/kelp_043035_7_24_1999.mat")
-caKelp <- caKelp$kelp[which(caKelp$kelp[,3]>0),]
-
-#this is slightly different - need the proj4string for an element of my list
-#first put the cakelp spatial points into a dataframe
-sp_classifications_df <- data.frame(matrix(ncol = 1, nrow = length(sp_classifications_list)))
+sp_classifications_df <- data.frame(SPDF = matrix(ncol = 1, nrow = length(sp_classifications_list)))
 
 sp_classifications_df$SPDF <- sp_classifications_list
+
+saveRDS(sp_classifications_df, "../data/products/sp_classifications_df.rds")
+
+
+#load calibration data and select only rows with kelp
+caKelp <- readMat("../data/kelp_043035_7_24_1999.mat")
+caKelp <- caKelp$kelp[which(caKelp$kelp[,3]>0),]
 
 #the proj4string is the same for all of them, so I only need to do this once - is there a better way?
 sr <- "+proj=longlat +datum=WGS84"
@@ -77,26 +64,18 @@ sr <- "+proj=longlat +datum=WGS84"
 caKelp.spoints <- SpatialPoints(caKelp[,2:1], 
                                 proj4string=CRS(sr))
 
-caKelp.spoints <- spTransform(caKelp.spoints, "+proj=utm +zone=10 +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs"
- )
-#Now convert to a list and add it into the dataframe - might not even need it in there but there we go
-sp_classifications_df$caKelp.spoints <- rep(list(caKelp.spoints), 12)
+#make sure to adjust utm zone if required
+caKelp.spoints <- spTransform(caKelp.spoints, "+proj=utm +zone=11 +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs")
 
-
-
-sp_classifications_df$caKelp.spoints <- crop(caKelp.spoints, extent(sp_classifications_df$SPDF))
-
-
-
-################Here's where I do each image.
-#one at a time for now
-#replace the row number in sp_classifications_df[[i,2]] for each image
+################
+#plot one at a time for now
+#replace the row number in sp_classifications_df[[i,1]] for each image
 x <- 5
 
-sp_classifications_df[[x,2]]
+class_sp <- sp_classifications_df[[x,1]]
 
 
-caKelp.spoints_crop <- crop(caKelp.spoints, extent(sp_classifications_df[[x,2]]))
+caKelp.spoints_crop <- crop(caKelp.spoints, extent(sp_classifications_df[[x,1]]))
 
 
 #caKelp.spoints <- spTransform(caKelp.spoints, CRS("+init=epsg:3857"))
@@ -112,23 +91,18 @@ plot(sp_classifications_df[[x,2]], add=T)
 
 
 ######################
+#more visualization:
 
-##ok, it looks like this will only work for the southern sites, starting at sp_classifications_df[[5,2]] and going to sp_classifications_df[[12,2]]
-
-#lets proceed with calbrations
-
-#forging ahead with AKP00016em
-
-lims <- as.numeric(sp_classifications_df[[x,2]]@data[1,c(10,8,11,9)])
+lims <- as.numeric(sp_classifications_df[[x,1]]@data[1,c(10,8,11,9)])
 coasts <- readOGR("../../data/GSHHS_shp/h", layer="GSHHS_h_L1",  useC=FALSE)
 
 
 plot(coasts, xlim=lims[1:2], ylim=lims[3:4], lwd=4)
-plot(sp_classifications_df[[x,2]], add=T)
+plot(sp_classifications_df[[x,1]], add=T)
 
-testdf <- as.data.frame(sp_classifications_df[[x,2]][1,])
+testdf <- as.data.frame(sp_classifications_df[[x,1]][1,])
 
-tileBrick <- rasterizeFFImage(sp_classifications_df[[x,2]][1,])
+tileBrick <- rasterizeFFImage(sp_classifications_df[[x,1]][1,])
 
 #reproject to longlat in order to add shapefile of coastline
 sr <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
@@ -141,18 +115,18 @@ plot(coasts, xlim=lims[1:2], ylim=lims[3:4], lwd=4, add=T)
 plot(caKelp.spoints, xlim=longBounds, ylim=latBounds, pch=20, cex=0.5, 
      add=T, col=rgb(1,0,0,alpha=0.1))
 
-plot(sp_classifications_df[[x,2]], add=T)
-plot(spTransform(sp_classifications_df[[x,2]], CRS("+proj=longlat +datum=WGS84")), add=T)
+plot(sp_classifications_df[[x,1]], add=T)
+plot(spTransform(sp_classifications_df[[x,1]], CRS("+proj=longlat +datum=WGS84")), add=T)
 
-proj_test <- spTransform(sp_classifications_df[[x,2]], CRS(sr))
+proj_test <- spTransform(sp_classifications_df[[x,1]], CRS(sr))
 
 
 
 ###################################
-#rasterise!
+#rasterize
 
-r <- raster(crs=sp_classifications_df[[6,2]]@proj4string, ext=extent(sp_classifications_df[[x,2]]), ncols = 400, nrows=364)
-rastLayer <- rasterize(SpatialPolygons(sp_classifications_df[[x,2]]@polygons), r, fun="count")
+r <- raster(crs=sp_classifications_df[[x,1]]@proj4string, ext=extent(sp_classifications_df[[x,1]]), ncols = 400, nrows=364)
+rastLayer <- rasterize(SpatialPolygons(sp_classifications_df[[x,1]]@polygons), r, fun="count")
 
 
 plotRGB(tileBrick)
@@ -164,9 +138,9 @@ plot(rastLayer,
 longBounds <- bbox(rastLayer)[1,]
 latBounds <- bbox(rastLayer)[2,]
 
-#for the tight shot!
-zoomLongBounds <- bbox(SpatialPolygons(sp_classifications_df[[x,2]]@polygons))[1,]
-zoomLatBounds <- bbox(SpatialPolygons(sp_classifications_df[[x,2]]@polygons))[2,]
+#Jarrett's viz parameters
+zoomLongBounds <- bbox(SpatialPolygons(sp_classifications_df[[x,1]]@polygons))[1,]
+zoomLatBounds <- bbox(SpatialPolygons(sp_classifications_df[[x,1]]@polygons))[2,]
 
 hasData <- which(!is.na(as.matrix(rastLayer)), arr.ind=TRUE)
 rastZoomXBounds <- c(min(hasData[,2]), max(hasData[,2]))
@@ -192,7 +166,7 @@ combined.raster <- overlay(caKelp.raster, rastLayer, fun="sum")
 plot(crop(combined.raster, zoomExtent))
 hist(as.matrix(combined.raster), breaks=1:16)
 ############
-# Functions to caculate areas
+# Functions to caculate areas from Jarrett
 #############
 getKelpPixelsFromRaster <- function(rast, threshold=1){
   length(which(as.matrix(rast)>=threshold))
@@ -224,53 +198,7 @@ plot(goodKelpPixels ~ users, data=kelpPixels)
 plot(kelpPixels ~ users, data=kelpPixels)
 abline(h=getKelpPixelsFromRaster(caKelp.raster))
 
-###S
-library(ggplot2)
-qplot(users, kelpPixels, data=kelpPixels, geom=c("point"), size=I(10)) +
-  xlab("\nMinimum # of Users Selecting a Pixel") + ylab("Total Pixels of Kelp\n") +
-  geom_abline(intercept=getKelpPixelsFromRaster(caKelp.raster), lwd=2, lty=2, col="red") +
-  theme_bw(base_size=24) +
-  ylim(c(0,4000))
 
-
-
-qplot(users, kelpArea, data=kelpPixels, geom=c("point"), size=I(10)) +
-  xlab("# of Users Selecting a 30 x 30m Pixel") + ylab("Total Square Km. of Kelp\n") +
-  geom_abline(intercept=0.03*0.03*getKelpPixelsFromRaster(caKelp.raster), slope=0, lwd=2, lty=2, col="red") +   theme_bw(base_size=24) +
-  scale_y_continuous(breaks=c(0,2,4,6,8,12)) +
-   theme(text = element_text(size=30))
-
-
-#Maybe a binomial model
-goodIDX <- which(!is.na(as.matrix(caKelp.raster)))
-
-
-calDF <- data.frame(calibration = as.vector(as.matrix(caKelp.raster)), 
-                    FF = as.vector(as.matrix(rastLayer)))
-
-calDF[which(is.na(calDF[,1])),1] <- 0
-calDF[,1] <- as.numeric(calDF[,1]>0)
-calDF[which(is.na(calDF[,2])),2] <- 0
-#Only things that were kelp in either the calibration of FF set
-calDF <- calDF[-which(rowSums(calDF)==0),]
-
-calGLM <- glm(calibration ~ FF, data=calDF, family=binomial)
-summary(calGLM)
-
-ggplot(data=calDF, mapping=aes(x=FF, y=calibration)) +
-  geom_point(alpha=0) +
-  #stat_smooth(method=glm, family="binomial", color="red", lwd=2) +
-  geom_jitter(position = position_jitter(width = .5, height=0.01)) +
-  theme_bw(base_size=24) +
-  xlab("\n# of People Selecting Pixel") + ylab("Pixel Included in Calibration Set\n(1=yes, 0=no)\n")
-
-cdfReduced <- calDF %>%
-  group_by(FF, calibration) %>%
-  summarise(`Number of Pixels`=n())
-
-qplot(FF, calibration, size=`Number of Pixels`, data=cdfReduced) +
-  theme_bw(base_size=24) +
-  xlab("\n# of People Selecting Pixel") + ylab("Pixel Included in Calibration Set\n(1=yes, 0=no)\n")
 
 
 
