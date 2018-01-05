@@ -9,6 +9,7 @@
 
 ##Load libraries and data
 library(ggmap)
+library(gganimate)
 source("./load_prep_classifications.R")
 
 #######
