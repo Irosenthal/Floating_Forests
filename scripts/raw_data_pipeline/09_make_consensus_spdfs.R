@@ -156,7 +156,8 @@ make_consensus_files <- function(filename,
                                  outdir =  "../../data/output/consensus_shapefiles/",
                                  rds = TRUE,
                                  sqlite = TRUE,
-                                 return_spdf=FALSE){
+                                 return_spdf=FALSE,
+                                 coastcrop=NULL){
   
   print(paste0("Starting ", filename))
   
@@ -181,22 +182,14 @@ make_consensus_files <- function(filename,
       select(-c(tile_upper_left_x_LL:tile_lower_right_y_LL))
   }
   
-  # if(coastcrop){
-  #   ca_coastline <- readOGR("../../data/coastlines/California", layer="California")
-  #  # all_spdfs_together_cropped <- crop(all_spdfs_together, ca_coastline, inverse=TRUE)
-  #   #all_spdfs_together_cropped <- all_spdfs_together[-is.na(together[,1]),]
-  #   clip <- gDifference(all_spdfs_together, ca_coastline, byid=TRUE)
-  #   row.names(clip) <- gsub(" .*", "", row.names(clip))
-  #   #clip <- spChFIDs(clip, row.names(clip))
-  #   
-  #   
-  #   all_spdfs_together_cropped <- SpatialPolygonsDataFrame(clip,
-  #                                                          data=all_spdfs_together@data)
-  #   #all_spdfs_together_cropped <- erase(all_spdfs_together,ca_coastline)
-  #   
-  #   plot(all_spdfs_together_cropped %>% filter(threshold==1), border="red")
-  #   plot(ca_coastline, add=TRUE)
-  # }
+  if(!is.null(coastcrop){
+    print(paste0("cropping out coast from", filename))
+    
+    all_spdfs_together <- erase(all_spdfs_together, coastcrop)
+
+   # plot(all_spdfs_together %>% filter(threshold==1), border="red")
+    #plot(ca_coastline, add=TRUE)
+  }
   
   
   outfilename <- gsub("sp_classifications_df", "ff_consensus_polys", filename)
@@ -223,9 +216,14 @@ make_consensus_files <- function(filename,
 #######
 # make it so
 #######
+ca_coastline <- readOGR("../../data/coastlines/California", layer="California")
+tazzie_coastline <- readOGR("../../data/coastlines/tasmania", layer="Tasmania")
 
-make_consensus_files(filename = "sp_classifications_df_zone_10.rds")
-make_consensus_files(filename = "sp_classifications_df_zone_11.rds")
-make_consensus_files(filename = "sp_classifications_df_zone_55.rds")
+make_consensus_files(filename = "sp_classifications_df_zone_10.rds",
+                     coastcrop=ca_coastline)
+make_consensus_files(filename = "sp_classifications_df_zone_11.rds",
+                     coastcrop=ca_coastline)
+make_consensus_files(filename = "sp_classifications_df_zone_55.rds",
+                     coastcrop=tazzie_coastline)
 
 
