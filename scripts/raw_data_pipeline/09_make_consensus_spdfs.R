@@ -9,6 +9,16 @@ library(raster)
 library(lubridate)
 library(tidyverse)
 library(spdplyr)
+library(future)
+
+
+#####
+# Get ready for multicore
+#####
+plan(multiprocess)
+#options(future.availableCores.system = availableCores()-1)
+#options(future.availableCores.system = 3)
+options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
 
 #####
 # Load subject metadata
@@ -23,10 +33,12 @@ subjects_metadata <- as.tibble(readRDS("../../data/output/raw_data_pipeline/subj
 ###########
 
 make_rast <- function(a_spdf){
+  print(paste0("making raster for ", a_spdf@data$subject_zooniverse_id[1]))
   combnR <- raster(crs=a_spdf@proj4string, ext=extent(a_spdf))
   rastLayerCombn <- rasterize(SpatialPolygons(a_spdf@polygons), combnR, 
                               fun="count")  
   
+  names(rastLayerCombn) <- a_spdf@data$subject_zooniverse_id[1]
   rastLayerCombn
 }
 
@@ -37,11 +49,13 @@ get_shared_areas <- function(rasts){
 }
 
 get_spdf <- function(arast){
-  thresholds <- na.exclude(unique(values(arast)))
+  print(paste0("making spdf for ", names(arast)))
+  
+  thresholds <- na.exclude(unique(raster::values(arast)))
   spdf_list <- lapply(thresholds, function(x){
     temp_rast <- arast
-    values(temp_rast)[values(temp_rast)<x] <- NA
-    values(temp_rast)[!is.na(values(temp_rast))] <- x
+    raster::values(temp_rast)[raster::values(temp_rast)<x] <- NA
+    raster::values(temp_rast)[!is.na(raster::values(temp_rast))] <- x
     #as(temp_rast, "SpatialPolygonsDataFrame")
     rasterToPolygons(temp_rast, dissolve = TRUE)
   })
@@ -80,12 +94,15 @@ make_consensus_spdf <- function(filename,
   
   #the long part - rasterizing and un-rasterizing
   spatial_df <- kelp_spdf %>% 
-  group_by(1:n()) %>%
-  mutate(dates = get_date(SPDF[[1]]))%>%
-  nest() %>%
-  mutate(rasts = purrr::map(data, ~make_rast(.$SPDF[[1]]))) %>%
-  mutate(spdfs = purrr::map(rasts, ~get_spdf(.[[1]]))) 
-
+    group_by(1:n()) %>%
+    mutate(dates = get_date(SPDF[[1]])) %>%
+    ungroup() %>%
+    mutate(rasts = purrr::map(SPDF, ~future(make_rast(.x)))) %>%
+    mutate(rasts = purrr::map(rasts, ~future::values(.x))) %>%
+    mutate(spdfs = purrr::map(rasts, ~future(get_spdf(.x)))) %>%
+    mutate(spdfs = purrr::map(spdfs, ~future::values(.x)))
+  
+  
   #saved spatial_df at this point - can load from .rds
   #saveRDS(spatial_df, file="../agu_data/spatial_df.rds")
   #spatial_df <- readRDS("../agu_data/spatial_df.rds")
@@ -99,9 +116,7 @@ make_consensus_spdf <- function(filename,
   print(paste0("adding data back to spdf for", filename))
   
   spatial_df_clean <- spatial_df_clean %>%
-    mutate(spdfs = purrr::map2(spdfs, data, ~add_data(.x, .y$SPDF[[1]], "subject_zooniverse_id"))) %>%
-    unnest(data) %>%
-    ungroup() 
+    mutate(spdfs = purrr::map2(spdfs, SPDF, ~add_data(.x, .y, "subject_zooniverse_id")))
 
   #Bunch of nulls? Check later
 
