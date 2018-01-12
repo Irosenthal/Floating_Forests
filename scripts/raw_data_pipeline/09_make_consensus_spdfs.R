@@ -197,7 +197,7 @@ make_consensus_files <- function(filename,
       select(-c(tile_upper_left_x_LL:tile_lower_right_y_LL))
   }
   
-  if(!is.null(coastcrop){
+  if(!is.null(coastcrop)){
     print(paste0("cropping out coast from", filename))
     
     all_spdfs_together <- erase(all_spdfs_together, coastcrop)
