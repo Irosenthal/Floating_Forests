@@ -17,14 +17,15 @@ library(future)
 #####
 plan(multiprocess)
 #options(future.availableCores.system = availableCores()-1)
-#options(future.availableCores.system = 3)
+options(future.availableCores.system = 20)
 options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
 
 #####
 # Load subject metadata
 #####
 
-subjects_metadata <- as.tibble(readRDS("../../data/output/raw_data_pipeline/subjects_master.rds"))
+#moved to inside of function where it's used as it hoses memory usage
+#subjects_metadata <- as.tibble(readRDS("../../data/output/raw_data_pipeline/subjects_master.rds"))
 
 #prjs <- unique(sapply(kelp_spdf$SPDF, function(x) proj4string(x)))
 
@@ -136,6 +137,9 @@ make_consensus_spdf <- function(filename,
   #merge in zooniverse subject metadata
   #########
   print(paste0("merging subject metadata for", filename))
+
+  #putting this here to minimize memory use
+  subjects_metadata <- as.tibble(readRDS("../../data/output/raw_data_pipeline/subjects_master.rds"))
   
   all_spdfs_together@data <- left_join(all_spdfs_together@data, 
           subjects_metadata %>% select(zooniverse_id, scene, classification_count,
