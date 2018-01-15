@@ -17,8 +17,8 @@ library(future)
 #####
 plan(multiprocess)
 #options(future.availableCores.system = availableCores()-1)
-options(future.availableCores.system = 20)
-options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
+options(future.availableCores.system = 40)
+#options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
 
 #####
 # Load subject metadata
@@ -39,7 +39,9 @@ make_rast <- function(a_spdf){
   rastLayerCombn <- rasterize(SpatialPolygons(a_spdf@polygons), combnR, 
                               fun="count")  
   
+  #fix the names for the coming rbind
   names(rastLayerCombn) <- a_spdf@data$subject_zooniverse_id[1]
+  
   rastLayerCombn
 }
 
@@ -62,6 +64,10 @@ get_spdf <- function(arast){
   })
   
   merged_spdf <- do.call(rbind, spdf_list)
+  
+  names(merged_spdf@data)[1] <- "threshold"
+  
+  merged_spdf
   
 }
 
@@ -86,7 +92,7 @@ make_consensus_spdf <- function(filename,
                                 datadir = "../../data/output/raw_data_pipeline/",
                                 plotme=FALSE){
   
-  kelp_spdf <- as.tibble(readRDS(paste0(datadir, filename)))
+  kelp_spdf <- as.tibble(readRDS(paste0(datadir, filename)))[1:5,]
   
   #for debug
   #kelp_spdf <- kelp_spdf[1:10,]
@@ -114,24 +120,27 @@ make_consensus_spdf <- function(filename,
     spatial_df_clean <- spatial_df[-which(sapply(spatial_df$spdfs, is.null)),]
   
   #assigning things - quicker processing part
-  print(paste0("adding data back to spdf for", filename))
+  print(paste0("adding data back to spdf for ", filename))
   
   spatial_df_clean <- spatial_df_clean %>%
     mutate(spdfs = purrr::map2(spdfs, SPDF, ~add_data(.x, .y, "subject_zooniverse_id")))
 
+  
+  tmp <- tmp %>%
+    mutate(spdfs = purrr::map(spdfs, ~names(.x@data)[1] = "threshold"))
+  
   #Bunch of nulls? Check later
 
   #######
   #bring it all together into one SpatialPolygonsDataFrame
   #######
-  print(paste0("making master spdf for", filename))
+  print(paste0("making master spdf for ", filename))
   
   all_spdfs_together <- do.call(rbind, spatial_df_clean$spdfs)
   #names(all_spdfs_together@data[1]) <- "threshold"
 
   all_spdfs_together@data <- all_spdfs_together@data %>%
-    rename(threshold = layer,
-         zooniverse_id = subject_zooniverse_id)
+    rename(zooniverse_id = subject_zooniverse_id)
 
   ########
   #merge in zooniverse subject metadata
