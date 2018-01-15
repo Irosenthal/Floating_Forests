@@ -155,7 +155,10 @@ make_consensus_spdf <- function(filename,
                                        created_at) %>%# , #was activated_at, 
                                       #now missing state) %>%
             rename(image_url = location.standard,
-                   scene_timestamp = DATE_ACQUIRED))
+                   scene_timestamp = DATE_ACQUIRED)) %>%
+    mutate(image_url = gsub("www", "static.zooniverse.org/www", image_url)) %>%
+    mutate(image_url = gsub("http", "https", image_url)) 
+    
 
 
   #######
