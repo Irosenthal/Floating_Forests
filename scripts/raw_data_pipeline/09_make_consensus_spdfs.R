@@ -92,7 +92,7 @@ make_consensus_spdf <- function(filename,
                                 datadir = "../../data/output/raw_data_pipeline/",
                                 plotme=FALSE){
   
-  kelp_spdf <- as.tibble(readRDS(paste0(datadir, filename)))[1:5,]
+  kelp_spdf <- as.tibble(readRDS(paste0(datadir, filename)))
   
   #for debug
   #kelp_spdf <- kelp_spdf[1:10,]
