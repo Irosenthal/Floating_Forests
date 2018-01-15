@@ -18,7 +18,7 @@ library(future)
 plan(multiprocess)
 #options(future.availableCores.system = availableCores()-1)
 options(future.availableCores.system = 40)
-#options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
+options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
 
 #####
 # Load subject metadata
@@ -95,7 +95,7 @@ make_consensus_spdf <- function(filename,
   kelp_spdf <- as.tibble(readRDS(paste0(datadir, filename)))
   
   #for debug
-  #kelp_spdf <- kelp_spdf[1:10,]
+  kelp_spdf <- kelp_spdf[1:5,]
   
   print(paste0("rasterizing and unrasterizing", filename))
   
@@ -125,9 +125,6 @@ make_consensus_spdf <- function(filename,
   spatial_df_clean <- spatial_df_clean %>%
     mutate(spdfs = purrr::map2(spdfs, SPDF, ~add_data(.x, .y, "subject_zooniverse_id")))
 
-  
-  tmp <- tmp %>%
-    mutate(spdfs = purrr::map(spdfs, ~names(.x@data)[1] = "threshold"))
   
   #Bunch of nulls? Check later
 
