@@ -95,7 +95,7 @@ make_consensus_spdf <- function(filename,
   kelp_spdf <- as.tibble(readRDS(paste0(datadir, filename)))
   
   #for debug
-  kelp_spdf <- kelp_spdf[1:5,]
+  #kelp_spdf <- kelp_spdf[1:5,]
   
   print(paste0("rasterizing and unrasterizing", filename))
   
@@ -222,19 +222,19 @@ make_consensus_files <- function(filename,
   outfilename <- gsub("\\.rds", "", outfilename)
 
   
-  if(sqllite) {
-    print(paste0("writing sqlite spdf for", filename))
-    writeOGR(all_spdfs_together, paste0(outdir,outfilename,".sqlite"), "ff_consensus", driver="SQLite", overwrite_layer=TRUE)
+  if(sqlite) {
+    print(paste0("writing sqlite spdf for ", filename))
+    writeOGR(all_spdfs_together, paste0(outdir, outfilename, ".sqlite"), "ff_consensus", driver="SQLite", overwrite_layer=TRUE)
   }
   
   if(rds){
-    print(paste0("writing rds for", filename))
+    print(paste0("writing rds for ", filename))
     saveRDS(all_spdfs_together, file=paste0(outdir,outfilename,".rds"))
   }  
   
   if(return_spdf) return(all_spdfs_together)
   
-  print(paste0("Done with", filename))
+  print(paste0("Done with ", filename))
   
   return(TRUE)
 }
