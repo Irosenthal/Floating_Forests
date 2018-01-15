@@ -151,10 +151,11 @@ make_consensus_spdf <- function(filename,
           subjects_metadata %>% select(zooniverse_id, scene, classification_count,
                                        location.standard, 
                                        UTM_ZONE:tile_lower_right_y_LL,
-                                       metadata.timestamp,
-                                       activated_at, state) %>%
+                                       DATE_ACQUIRED, #was metadata.timestamp, 
+                                       created_at) %>%# , #was activated_at, 
+                                      #now missing state) %>%
             rename(image_url = location.standard,
-                   scene_timestamp = metadata.timestamp))
+                   scene_timestamp = DATE_ACQUIRED))
 
 
   #######
