@@ -17,7 +17,7 @@ library(future)
 #####
 plan(multiprocess)
 #options(future.availableCores.system = availableCores()-1)
-options(future.availableCores.system = 40)
+options(future.availableCores.system = 30)
 options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
 
 #####
@@ -225,15 +225,18 @@ make_consensus_files <- function(filename,
   outfilename <- gsub("\\.rds", "", outfilename)
 
   
-  if(sqlite) {
-    print(paste0("writing sqlite spdf for ", filename))
-    writeOGR(all_spdfs_together, paste0(outdir, outfilename, ".sqlite"), "ff_consensus", driver="SQLite", overwrite_layer=TRUE)
-  }
-  
   if(rds){
-    print(paste0("writing rds for ", filename))
+    print(paste0("writing rds ", paste0(outdir,outfilename,".rds")))
     saveRDS(all_spdfs_together, file=paste0(outdir,outfilename,".rds"))
   }  
+  
+  if(sqlite) {
+    sqlite_file <- paste0(outdir, outfilename, ".sqlite")
+    print(paste0("writing sqlite spdf ", sqlite_file))
+    if(file.exists(sqlite_file)) file.remove(sqlite_file)
+    
+    writeOGR(all_spdfs_together, paste0(outdir, outfilename, ".sqlite"), "ff_consensus", driver="SQLite")
+  }
   
   if(return_spdf) return(all_spdfs_together)
   
