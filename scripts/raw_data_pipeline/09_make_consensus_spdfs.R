@@ -115,7 +115,7 @@ make_consensus_spdf <- function(filename,
     mutate(spdfs = purrr::map(spdfs, ~future::values(.x)))
   
   print(paste0("done rasterizing and unrasterizing", filename))
-  saveRDS(spatial_df, file=paste0("./spatial_df_tmp_", filename)))
+  saveRDS(spatial_df, file=paste0("./spatial_df_tmp_", filename))
   
   #saved spatial_df at this point - can load from .rds
   #saveRDS(spatial_df, file="../agu_data/spatial_df.rds")
