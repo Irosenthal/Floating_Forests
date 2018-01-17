@@ -17,7 +17,7 @@ library(future)
 #####
 plan(multiprocess)
 #options(future.availableCores.system = availableCores()-1)
-#options(future.availableCores.system = 40)
+options(future.availableCores.system = 40)
 options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
 
 #####
@@ -246,7 +246,7 @@ make_consensus_files <- function(filename,
   }
   
   #from debug
-  tmpfilename <- paste0("./spatial_df_tmp_", filename))
+  tmpfilename <- paste0("./spatial_df_tmp_", filename)
   if(file.exists(tmpfilename)) file.remove(tmpfilename)
 
 
