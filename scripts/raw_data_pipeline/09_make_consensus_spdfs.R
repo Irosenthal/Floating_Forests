@@ -17,7 +17,7 @@ library(future)
 #####
 plan(multiprocess)
 #options(future.availableCores.system = availableCores()-1)
-options(future.availableCores.system = 30)
+#options(future.availableCores.system = 40)
 options(future.globals.maxSize= 1500*1024^2) #for the rasterize function
 
 #####
@@ -53,6 +53,11 @@ get_shared_areas <- function(rasts){
 
 get_spdf <- function(arast){
   print(paste0("making spdf for ", names(arast)))
+
+  #some rasters are empty as there is no kelp
+  #but we still need them in a dataset - so include a 0 threshold
+  if(sum(is.na(raster::values(arast)))==length(arast)) arast[1,1] <- 0
+  
   
   thresholds <- na.exclude(unique(raster::values(arast)))
   spdf_list <- lapply(thresholds, function(x){
@@ -109,6 +114,8 @@ make_consensus_spdf <- function(filename,
     mutate(spdfs = purrr::map(rasts, ~future(get_spdf(.x)))) %>%
     mutate(spdfs = purrr::map(spdfs, ~future::values(.x)))
   
+  print(paste0("done rasterizing and unrasterizing", filename))
+  saveRDS(spatial_df, file=paste0("./spatial_df_tmp_", filename)))
   
   #saved spatial_df at this point - can load from .rds
   #saveRDS(spatial_df, file="../agu_data/spatial_df.rds")
@@ -238,6 +245,11 @@ make_consensus_files <- function(filename,
     writeOGR(all_spdfs_together, paste0(outdir, outfilename, ".sqlite"), "ff_consensus", driver="SQLite")
   }
   
+  #from debug
+  tmpfilename <- paste0("./spatial_df_tmp_", filename))
+  if(file.exists(tmpfilename)) file.remove(tmpfilename)
+
+
   if(return_spdf) return(all_spdfs_together)
   
   print(paste0("Done with ", filename))
