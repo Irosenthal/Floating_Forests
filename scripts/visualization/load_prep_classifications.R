@@ -32,5 +32,5 @@ get_classifications <- function(filename = "ff_consensus_polys_zone_10.rds",
   
   if(return_value == "df") return(classifications_df)
   
-  list(spdf = classifications, df = classifications_df)
+  return(list(spdf = classifications, df = classifications_df))
 }

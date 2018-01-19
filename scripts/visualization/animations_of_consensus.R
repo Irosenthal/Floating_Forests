@@ -17,6 +17,7 @@ classifications_list <- get_classifications(return_value="both")
 classifications <- classifications_list$spdf
 classifications_df <- classifications_list$df
 rm(classifications_list) #because it's big!
+gc()
 
 #######
 ##get a map of CA coastline to plot against ####
@@ -103,3 +104,10 @@ gg_animate(pmap + xlim(-122.014459,  -120.497787) + ylim(35.331980, 36.406971),
 gg_animate(pmap + xlim(-124.001673, -122.772273) + ylim(38.015699,39.176660), 
            "../../figures/consensus_gifs/threshold_polys_northcoast_rast.gif",
            title_frame=TRUE, width=800, height=600)
+
+
+#some faceting
+png("../gifs/threshold_polys_northcoast_facet.gif", width=1024, height=768)
+p + 
+  facet_wrap( ~ threshold)
+dev.off()
