@@ -5,7 +5,7 @@ library(raster)
 library(rgdal)
 
 #Data sources
-coasts <- readOGR("../data/gshhg-shp-2.3.4/GSHHS_shp/h", layer="GSHHS_h_L1",  useC=FALSE)
+coasts <- readOGR("../../data/gshhg-shp-2.3.4/GSHHS_shp/h", layer="GSHHS_h_L1",  useC=FALSE)
 
 
 #Make a cropped CA coastline
