@@ -11,7 +11,7 @@ library(lubridate)
 
 get_classifications <- function(filename = "ff_consensus_polys_zone_10.rds",
                                 datadir = "../../data/output/consensus_shapefiles/",
-                                return = "df"){
+                                return_value = "df"){
 
   #read in spatialPolygonsDataFrame (shapefile)
   #classifications <- readOGR("../../data/output/consensus_shapefiles/ff_polys_proj.sqlite", "ff_consensus", stringsAsFactors=FALSE) #slower

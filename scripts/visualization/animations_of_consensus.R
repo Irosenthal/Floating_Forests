@@ -8,15 +8,21 @@
 
 
 ##Load libraries and data
+library(ggplot2)
 library(ggmap)
 library(gganimate)
 source("./load_prep_classifications.R")
+
+classifications_list <- get_classifications(return_value="both")
+classifications <- classifications_list$spdf
+classifications_df <- classifications_list$df
+rm(classifications_list) #because it's big!
 
 #######
 ##get a map of CA coastline to plot against ####
 #####
 #Just the coastline
-ca_coastline <- readOGR("../data/coastlines/California", layer="California")
+ca_coastline <- readOGR("../../data/coastlines/California", layer="California")
 ca_coastline <- crop(ca_coastline, extent(classifications))
 
 #a raster of the coast
