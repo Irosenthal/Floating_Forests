@@ -10,11 +10,11 @@ library(lubridate)
 
 #read in spatialPolygonsDataFrame (shapefile)
 #classifications <- readOGR("../../data/output/consensus_shapefiles/ff_polys_proj.sqlite", "ff_consensus", stringsAsFactors=FALSE) #slower
-classifications <- readRDS("../../data/output/consensus_shapefiles/ff_polys_proj.rds")
+classifications <- readRDS("../../data/output/consensus_shapefiles/ff_consensus_polys_zone_10.rds")
 
 #add time information
 classifications <- classifications %>% 
-  mutate(scene_timestamp = parse_date_time(scene_timestamp, orders="ymdHMS"),
+  mutate(scene_timestamp = parse_date_time(scene_timestamp, orders="ymd"),
          quarter = quarter(scene_timestamp, with_year=TRUE, fiscal_start=11))
 
 #convert to data frame
