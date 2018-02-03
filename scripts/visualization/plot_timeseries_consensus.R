@@ -70,7 +70,7 @@ plot_format <-  list(
   scale_color_viridis(discrete=TRUE, guide=guide_legend(title="User\nThreshold")),
   theme_bw(base_size=17),
   xlab("Date"),
-  ylab("Kelp Pixels per Image") ,
+  ylab("Kelp Pixels") ,
     scale_x_continuous(breaks = seq(1984, 2012, by=2)),
   theme(axis.text.x = element_text(hjust=1, angle=45)))
 
