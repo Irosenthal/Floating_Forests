@@ -40,9 +40,11 @@ merged_spdf <- do.call(rbind, spdf_list) %>%
   arrange(layer)
 
 # Plot them
-par(mfrow=c(1,2))
-plot(arast)
-plot(merged_spdf, col=merged_spdf@data$layer) #yuk - ggplot better
+par(mfrow=c(3,4))
+arast2 <- crop(arast, extent(merged_spdf))
+plot(arast2)
+for(i in 1:10)
+  plot(merged_spdf%>%filter(layer==i), main=paste0("Threshold = ", i)) #not sure what is up with 9 and 10...
 par(mfrow=c(1,1))
 
 #--------------
