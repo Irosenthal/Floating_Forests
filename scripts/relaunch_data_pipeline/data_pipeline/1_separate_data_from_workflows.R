@@ -42,7 +42,9 @@ ff_relaunch <- ff_relaunch %>%
 # split into different workflows and deparse the JSON
 ##
 
-#helpful workflow/function
+#helpful workflow/functions
+#although really only works for
+#well behaved JSON
 flatten_json <- . %>%
   fromJSON(.) %>% 
   purrr::flatten() %>% 
@@ -51,6 +53,9 @@ flatten_json <- . %>%
 
 #lots of json error checking in here - oy
 #the metadata column just keeps changing...
+#so this function deals with the many different issues I've found
+#and I <3 possibly as it helps me debug and inserts flags
+#for later scripts down the pipeline to help me find chokepoints
 possibly_deparse <- possibly(function(x) x %>% 
                                fromJSON() %>% 
                                purrr::flatten_df() %>% 
@@ -62,12 +67,14 @@ possibly_deparse <- possibly(function(x) x %>%
                              #if the above fails, return a no_metadata_info
                              otherwise = tibble(no_metadata_info = TRUE))
 
+#the main deparsing workflow
 deparse_json <- . %>%
   mutate(subject_data = map(subject_data, flatten_json),
          metadata = map(metadata, possibly_deparse)) %>%
   unnest(subject_data, metadata) %>%
   select(-starts_with("V"))
 
+#classification workflow
 ff_relaunch_classifications <- ff_relaunch %>%
   filter(workflow_id == 2150)  %>% 
   deparse_json()
