@@ -51,22 +51,22 @@ flatten_json <- . %>%
 
 #lots of json error checking in here - oy
 #the metadata column just keeps changing...
-possibly_deparse <- possibly(function(x) x %>% fromJSON() %>% 
+possibly_deparse <- possibly(function(x) x %>% 
+                               fromJSON() %>% 
                                purrr::flatten_df() %>% 
-                               mutate_all(as.character), 
+                               #deal with the constantly changing metadata JSON
+                               setNames( make.names(names(.), unique = TRUE)) %>%
+                               select(-starts_with("X")) %>%
+                               mutate_all(.funs = as.character), 
+                             
+                             #if the above fails, return a no_metadata_info
                              otherwise = tibble(no_metadata_info = TRUE))
 
 deparse_json <- . %>%
   mutate(subject_data = map(subject_data, flatten_json),
          metadata = map(metadata, possibly_deparse)) %>%
-  unnest(subject_data) %>%
-  select(-starts_with("V")) %>%
-  #deal with the constantly changing metadata JSON
-  mutate(metadata = map(metadata, ~setNames(.x, make.names(names(.x), unique = TRUE)))) %>%
-  mutate(metadata = map(metadata, ~select(.x, -starts_with("X")))) %>%
-  mutate(metadata = map(metadata, mutate_all, .funs = as.character)) %>%
-  unnest(metadata)
-
+  unnest(subject_data, metadata) %>%
+  select(-starts_with("V"))
 
 ff_relaunch_classifications <- ff_relaunch %>%
   filter(workflow_id == 2150)  %>% 
