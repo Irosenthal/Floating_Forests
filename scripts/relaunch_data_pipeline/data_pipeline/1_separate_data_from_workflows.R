@@ -12,15 +12,17 @@ library(readr)
 library(lubridate)
 library(jsonlite)
 
+read_dir <- "../../../data/relaunch_data/raw_data/"
+write_dir <-  "../../../data/relaunch_data/level_0/"
 
 
 #read relaunch data
-ff_relaunch <- read_csv("../../../data/relaunch_data/raw_data/floating-forests-classifications.csv",
+ff_relaunch <- read_csv(str_c(read_dir, "floating-forests-classifications.csv"),
                          col_types="icicicdcccccci") %>%
    mutate(created_at = lubridate::parse_date_time(created_at, orders="ymdHMS"))
  
 #read subjects and deparse JSON 
-ff_relaunch_subjects <- read_csv("../../../data/relaunch_data/raw_data/floating-forests-subjects-2018-12-12.csv") %>% 
+ff_relaunch_subjects <- read_csv(str_c(read_dir, "floating-forests-subjects-2018-12-12.csv")) %>% 
   mutate(
     metadata = map(metadata, ~fromJSON(.x) %>% as_tibble),
     locations = map(locations, fromJSON)) %>%  
@@ -85,6 +87,6 @@ ff_relaunch_swipe <- ff_relaunch %>%
   deparse_json()
 
 #write data as rds to save space
-saveRDS(ff_relaunch_subjects, "../../../data/relaunch_data/level_0/ff_relaunch_subjects.rds")
-saveRDS(ff_relaunch_classifications, "../../../data/relaunch_data/level_0/floating_forests_classifications.rds")
-saveRDS(ff_relaunch_swipe, "../../../data/relaunch_data/level_0/floating_forests_swipe.rds")
+saveRDS(ff_relaunch_subjects, str_c(write_dir, "ff_relaunch_subjects.rds"))
+saveRDS(ff_relaunch_classifications, str_c(write_dir, "floating_forests_classifications.rds"))
+saveRDS(ff_relaunch_swipe, str_c(write_dir, "floating_forests_swipe.rds"))
