@@ -105,8 +105,8 @@ if(length(raster_tiles_filtered)>0){
   cat("No consensus rasters to parse\n")
 }
 
-# 
-# tilename <- consensus_tiles[[1]]$subject_id[1]
+
+# tilename <- consensus_tiles[[2]]$subject_id[1]
 # tile <- rasterizeFFImage(tilename)
 # raster::plotRGB(tile)
-# plot(consensus_tiles[[1]]["threshold"], add=TRUE)
+# plot(consensus_tiles[[2]]["threshold"], add=TRUE)
