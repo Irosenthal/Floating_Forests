@@ -47,9 +47,19 @@ make_threshold_raster <- function(a_rast, threshold){
   a_rast
 }
 
+#spex::polygonize sometimes throws odd errors, so...
+safe_polygonize <- function(a_rast){
+  poly <- try(polygonize(a_rast), silent=TRUE)
+  if(class(poly)[1]=="try-error"){
+    poly <- st_as_sfc(raster::rasterToPolygons(a_rast))
+  }
+  
+  return(poly)
+}
+
 make_threshold_polygons <- function(a_rast, max_threshold = 13){
   out_polys <- map(1:max_threshold, ~make_threshold_raster(a_rast, .x)) %>%
-    map(polygonize) 
+    map(safe_polygonize) 
 
   #unionize into sfg objects by threshold
   out_union <-  map(out_polys, st_union)
@@ -98,13 +108,18 @@ raster_tiles_filtered <- raster_tiles %>%
   discard(str_detect(., done_tiles))
 
 #make the consensus polygon tiles
+#install furrr from github for future_walk instead
 if(length(raster_tiles_filtered)>0){
-  consensus_tiles <- future_walk(raster_tiles_filtered, make_threshold_polys_from_tilepath, 
+  consensus_tiles <- future_map(raster_tiles_filtered, make_threshold_polys_from_tilepath, 
                        write_dir = write_dir, .progress=TRUE)
 }else{
   cat("No consensus rasters to parse\n")
 }
 
+# testing code below
+#
+# test <- keep(raster_tiles, str_detect(raster_tiles, "15123197"))
+# make_threshold_polys_from_tilepath(test, write_dir = write_dir)
 
 # tilename <- consensus_tiles[[2]]$subject_id[1]
 # tile <- rasterizeFFImage(tilename)
