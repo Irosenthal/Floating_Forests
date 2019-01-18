@@ -70,7 +70,7 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
   if(write_out_tile){
     #supressing warnings for blank rasters
     suppressWarnings(
-      out <- writeRaster(rast, str_c(write_dir, "_", one_subject$subject_ids[1], ".grd"), overwrite=TRUE)
+      out <- writeRaster(rast, str_c(write_dir, one_subject$subject_ids[1], ".grd"), overwrite=TRUE)
     )
   }
   
