@@ -205,12 +205,12 @@ make_subject_sf <- function(subject_subset){
 
 #future at the level of subject ids
 set.seed(5000)
-levs <- unique(ff_relaunch_classifications$subject_ids) %>% sample(1000, replace=FALSE)
+levs <- unique(ff_relaunch_classifications$subject_ids) %>% sample(100, replace=FALSE)
 ff_test <- ff_relaunch_classifications %>%
   filter(subject_ids %in% levs)
 
 sf_list <- map(split(ff_test, ff_test$`#utm_zone`),
-                ~future_map(split(.x, .x$subject_ids), make_subject_sf) %>%
+                ~future_map(split(.x, .x$subject_ids), make_subject_sf, .progress=TRUE) %>%
                  reduce(rbind))
 
 

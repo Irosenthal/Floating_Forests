@@ -17,6 +17,9 @@ library(stringr)
 
 options(stringsAsFactors = FALSE)
 
+#setup multicore environment to use all cores available ####
+plan(multiprocess)
+#plan(sequential) #for testing
 
 source("./_pipeline_functions.R")
 
@@ -97,5 +100,5 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
 # test_rast <- map(split(test, test$subject_ids), rasterize_one_subject)
 
 
-rasters <- walk(sf_objects, ~
+rasters <- future_walk(sf_objects, ~
                   map(split(.x, .x$subject_ids), rasterize_one_subject)) 
