@@ -110,7 +110,7 @@ raster_tiles_filtered <- raster_tiles %>%
 #make the consensus polygon tiles
 #install furrr from github for future_walk instead
 if(length(raster_tiles_filtered)>0){
-  consensus_tiles <- future_map(raster_tiles_filtered, make_threshold_polys_from_tilepath, 
+  consensus_tiles <- future_walk(raster_tiles_filtered, make_threshold_polys_from_tilepath, 
                        write_dir = write_dir, .progress=TRUE)
 }else{
   cat("No consensus rasters to parse\n")
