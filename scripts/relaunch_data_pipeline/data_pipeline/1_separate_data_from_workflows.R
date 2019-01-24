@@ -28,6 +28,8 @@ ff_relaunch <- read_csv(str_c(read_dir, "floating-forests-classifications.csv"),
    mutate(created_at = lubridate::parse_date_time(created_at, orders="ymdHMS"))
  
 #read subjects and deparse JSON 
+cat("Processing subjects...\n")
+
 ff_relaunch_subjects <- read_csv(str_c(read_dir, "floating-forests-subjects-2018-12-12.csv")) %>% 
   mutate(
     metadata = map(metadata, ~fromJSON(.x) %>% as_tibble),
@@ -84,11 +86,15 @@ deparse_json <- . %>%
   select(-starts_with("V"))
 
 #classification workflow
+cat("Processing classifications...\n")
+
 ff_relaunch_classifications <- ff_relaunch %>%
   filter(workflow_id == 2150)  %>% 
   deparse_json()
 
 #swipe workflow only
+cat("Processing swipe...\n")
+
 ff_relaunch_swipe <- ff_relaunch %>%
   filter(workflow_id == 3246)  %>% 
   deparse_json()
