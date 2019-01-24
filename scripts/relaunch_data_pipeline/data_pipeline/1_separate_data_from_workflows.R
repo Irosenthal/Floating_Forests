@@ -8,10 +8,16 @@
 
 #load libraries
 library(tidyverse)
+library(furrr)
 library(readr)
 library(lubridate)
 library(jsonlite)
 
+#setup multicore environment to use all cores available ####
+plan(multiprocess)
+#plan(sequential) #for testing
+
+#the relevant directories
 read_dir <- "../../../data/relaunch_data/raw_data/"
 write_dir <-  "../../../data/relaunch_data/level_0/"
 
@@ -31,7 +37,7 @@ ff_relaunch_subjects <- read_csv(str_c(read_dir, "floating-forests-subjects-2018
   unnest(metadata)
 
 
-# TO deal with data from when we worked on the beta of the site
+# To deal with data from when we worked on the beta of the site
 # ff_relaunch_beta <- ff_relaunch %>%
 #   filter(created_at < parse_date_time("12-12-2017", orders="mdy")) %>%
 #   filter(created_at > parse_date_time("04-18-2017", orders="mdy")) 
@@ -70,9 +76,10 @@ possibly_deparse <- possibly(function(x) x %>%
                              otherwise = tibble(no_metadata_info = TRUE))
 
 #the main deparsing workflow
+#using future_map due to large nature of input data
 deparse_json <- . %>%
-  mutate(subject_data = map(subject_data, flatten_json),
-         metadata = map(metadata, possibly_deparse)) %>%
+  mutate(subject_data = future_map(subject_data, flatten_json),
+         metadata = future_map(metadata, possibly_deparse)) %>%
   unnest(subject_data, metadata) %>%
   select(-starts_with("V"))
 
