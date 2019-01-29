@@ -21,8 +21,8 @@ write_dir <-  "../../../data/relaunch_data/level_0/"
 
 
 #setup multicore environment to use all cores available ####
-#plan(multiprocess)
-plan(sequential) #for testing
+plan(multiprocess)
+#plan(sequential) #for testing
 
 
 #read data ####
@@ -209,7 +209,8 @@ levs <- unique(ff_relaunch_classifications$subject_ids) %>% sample(100, replace=
 ff_test <- ff_relaunch_classifications %>%
   filter(subject_ids %in% levs)
 
-sf_list <- map(split(ff_test, ff_test$`#utm_zone`),
+#sf_list <- map(split(ff_test, ff_test$`#utm_zone`),
+sf_list <- map(split(ff_relaunch_classifications, ff_relaunch_classifications$`#utm_zone`),
                 ~future_map(split(.x, .x$subject_ids), make_subject_sf, .progress=TRUE) %>%
                  reduce(rbind))
 
