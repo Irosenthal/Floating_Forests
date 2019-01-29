@@ -24,7 +24,7 @@ plan(multiprocess)
 source("./_pipeline_functions.R")
 
 read_dir <-  "../../../data/relaunch_data/level_0/"
-write_dir <-  "../../../data/relaunch_data/level_0/raster_tiles/"
+write_dir <- "../../../data/relaunch_data/level_0/raster_tiles/"
 
 #read data
 sf_objects <- list.files(read_dir) %>%
@@ -100,5 +100,12 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
 # test_rast <- map(split(test, test$subject_ids), rasterize_one_subject)
 
 
-rasters <- future_walk(sf_objects, ~
+#filter out any tiles already done
+done_tiles <- list.files(write_dir) %>%
+  str_replace("\\.gr[d,i]", "") %>%
+  unique()
+
+sf_objects_todo <- map(sf_objects, ~filter(.x, !(subject_ids %in% done_tiles)))
+
+rasters <- future_walk(sf_objects_todo, ~
                   map(split(.x, .x$subject_ids), rasterize_one_subject)) 
