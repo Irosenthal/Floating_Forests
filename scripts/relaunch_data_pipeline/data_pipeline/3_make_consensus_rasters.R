@@ -41,12 +41,26 @@ sf_objects <- list.files(read_dir) %>%
 
 #subj <- unique(sf_objects[[1]]$subject_ids)
 #one_subject <- sf_objects[[1]] %>% filter(subject_ids == subj[1])
+st_get_npts <- function(x){
+  pts <- sapply(x, function(x) nrow(x[[1]]))
+  sum(pts)
+}
+
+
+
+st_get_npoly <- function(x){
+  length(x[[1]])
+}
 
 rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
   cat(str_c("Rasterizing ", one_subject$subject_ids[1], "...\n"))
   
   #make sure this isn't a blank tile
-  one_subject_nonempty <- dplyr::filter(one_subject, !(sapply(one_subject$geometry, is_empty)))
+  one_subject_nonempty <- dplyr::filter(one_subject, !(sapply(one_subject$geometry, is_empty))) %>%
+    mutate(npoly = map_dbl(geometry, st_get_npoly),
+           npts =  map_dbl(geometry, st_get_npts)) %>%
+    dplyr::filter(npts>1) #get rid of any single dots
+  
 
   #if it's all empty, create an empty raster
   #using subject as the bbox
@@ -95,7 +109,7 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
 # levs <- unique(sf_objects[[1]]$subject_ids) %>% sample(10, replace=FALSE)
 # 
 #  test <- sf_objects[[1]] %>%
-#   filter(subject_ids %in% 15117135)
+#   filter(subject_ids %in% levs)
 # # 
 # test_rast <- map(split(test, test$subject_ids), rasterize_one_subject)
 
