@@ -64,8 +64,8 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
     
   
   }else{
-    rast <- fasterize(one_subject %>% mutate(value = 1), 
-              raster(one_subject, res = 10), 
+    rast <- fasterize(one_subject_nonempty %>% mutate(value = 1), 
+              raster(one_subject_nonempty, res = res), 
               field = "value", fun = "sum")
   }
   
@@ -94,9 +94,9 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
 # set.seed(5000)
 # levs <- unique(sf_objects[[1]]$subject_ids) %>% sample(10, replace=FALSE)
 # 
-# test <- sf_objects[[1]] %>%
-#   filter(subject_ids %in% levs)
-# 
+#  test <- sf_objects[[1]] %>%
+#   filter(subject_ids %in% 15117135)
+# # 
 # test_rast <- map(split(test, test$subject_ids), rasterize_one_subject)
 
 
