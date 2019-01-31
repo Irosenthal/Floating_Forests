@@ -42,14 +42,28 @@ sf_objects <- list.files(read_dir) %>%
 #subj <- unique(sf_objects[[1]]$subject_ids)
 #one_subject <- sf_objects[[1]] %>% filter(subject_ids == subj[1])
 st_get_npts <- function(x){
-  pts <- sapply(x, function(x) nrow(x[[1]]))
+  sapply(x, function(x) nrow(x[[1]]))
+}
+
+st_get_npts_sum <- function(x){
+  pts <- st_get_npts(x)
   sum(pts)
 }
 
-
-
 st_get_npoly <- function(x){
-  length(x[[1]])
+  length(x)
+}
+
+#some multipolygons have places where a user
+#just clicked on a point
+st_remove_points <- function(x){
+  pts <- which(st_get_npts(x)!=1)
+  if(length(pts)==length(x)) return(x) #safeguard
+  
+  # map(pts, ~pluck(x, .)) %>%
+  #   st_multipolygon
+  st_make_valid(x) 
+  
 }
 
 rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
@@ -57,10 +71,9 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
   
   #make sure this isn't a blank tile
   one_subject_nonempty <- dplyr::filter(one_subject, !(sapply(one_subject$geometry, is_empty))) %>%
-    mutate(npoly = map_dbl(geometry, st_get_npoly),
-           npts =  map_dbl(geometry, st_get_npts)) %>%
-    dplyr::filter(npts>1) #get rid of any single dots
-  
+    mutate(geometry = map(geometry, st_remove_points),
+           txt = map_chr(geometry, st_as_text)) %>%
+    filter(str_detect(txt, "POLYGON")) #fasterize borks otherwise
 
   #if it's all empty, create an empty raster
   #using subject as the bbox
@@ -105,14 +118,15 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
 
 # testing code
 # 
-# set.seed(5000)
-# levs <- unique(sf_objects[[1]]$subject_ids) %>% sample(10, replace=FALSE)
-# 
-#  test <- sf_objects[[1]] %>%
-#   filter(subject_ids %in% levs)
+# # set.seed(5000)
+#  levs <- unique(sf_objects[[1]]$subject_ids) %>% sample(10, replace=FALSE)
 # # 
+#  test <- sf_objects[[1]] %>%
+#    filter(subject_ids %in% 15118293)
+# # filter(subject_ids %in% levs)
+#  #
 # test_rast <- map(split(test, test$subject_ids), rasterize_one_subject)
-
+# 
 
 #filter out any tiles already done
 done_tiles <- list.files(write_dir) %>%
