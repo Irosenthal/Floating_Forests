@@ -74,9 +74,9 @@ st_remove_points <- function(x){
   valid_geom <- valid_geom[geom_pieces][[1]]
   if(!("MULTIPOLYGON" %in% class(valid_geom)))
     valid_geom <- st_cast(valid_geom, "MULTIPOLYGON")
-     
-  #  return( st_geometrycollection(valid_geom[geom_pieces]) )
-    return(valid_geom) 
+  
+  #return!   
+  return(valid_geom) 
 }
 
 rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
