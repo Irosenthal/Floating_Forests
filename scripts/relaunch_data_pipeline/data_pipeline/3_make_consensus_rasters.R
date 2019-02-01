@@ -55,9 +55,9 @@ st_get_npoly <- function(x){
 }
 
 #some multipolygons have places where a user
-#just clicked on a point
+#just clicked on a point or a line
 st_remove_points <- function(x){
-  pts <- which(st_get_npts(x)!=1)
+  pts <- which(st_get_npts(x)>3)
   if(length(pts)==length(x)) return(x) #safeguard
   
   # map(pts, ~pluck(x, .)) %>%
@@ -83,8 +83,15 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
   cat(str_c("Rasterizing ", one_subject$subject_ids[1], "...\n"))
   
   #make sure this isn't a blank tile
-  one_subject_nonempty <- dplyr::filter(one_subject, !(sapply(one_subject$geometry, is_empty))) %>%
-    mutate(geometry = map(geometry, st_remove_points))#,
+  one_subject_nonempty <- one_subject %>%
+    dplyr::filter(!(sapply(one_subject$geometry, is_empty))) %>%
+    mutate(geometry = map(geometry, st_remove_points),
+            empt = map_lgl(geometry, st_is_empty)) %>%
+    dplyr::filter(!empt) %>%
+    dplyr::select(-empt)
+    
+    #refilter
+  #,
 #           txt = map_chr(geometry, st_as_text)) %>%
  #   filter(str_detect(txt, "POLYGON")) %>% #fasterize borks otherwise
  #   dplyr::select(-txt)
@@ -136,7 +143,7 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
 #  levs <- unique(sf_objects[[1]]$subject_ids) %>% sample(10, replace=FALSE)
 # #
 #  test <- sf_objects[[1]] %>%
-#   # filter(subject_ids %in% 15117528)
+#   #filter(subject_ids %in% 15116674)
 #  filter(subject_ids %in% levs)
 # 
 # test_rast <- map(split(test, test$subject_ids), rasterize_one_subject)
