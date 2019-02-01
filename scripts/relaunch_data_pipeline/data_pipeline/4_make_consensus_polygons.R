@@ -110,7 +110,7 @@ if(length(done_tiles)>0){
   raster_tiles_filtered <- raster_tiles %>%
     discard(str_detect(., done_tiles))
 }else{
-  raster_tiles_filtered <- done_tiles
+  raster_tiles_filtered <- raster_tiles
 }
 
 #make the consensus polygon tiles
