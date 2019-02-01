@@ -62,8 +62,14 @@ st_remove_points <- function(x){
   
   # map(pts, ~pluck(x, .)) %>%
   #   st_multipolygon
-  st_make_valid(x) 
+  valid_geom <- st_make_valid(x) %>%
+    st_cast(to = "GEOMETRYCOLLECTION") 
   
+  geom_pieces <- map_lgl(valid_geom, ~  1  <= sum(str_detect(class(.x), "POLYGON")))
+
+  
+  #  return( st_geometrycollection(valid_geom[geom_pieces]) )
+    return( valid_geom[geom_pieces][[1]]) 
 }
 
 rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
@@ -71,9 +77,10 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
   
   #make sure this isn't a blank tile
   one_subject_nonempty <- dplyr::filter(one_subject, !(sapply(one_subject$geometry, is_empty))) %>%
-    mutate(geometry = map(geometry, st_remove_points),
-           txt = map_chr(geometry, st_as_text)) %>%
-    filter(str_detect(txt, "POLYGON")) #fasterize borks otherwise
+    mutate(geometry = map(geometry, st_remove_points))#,
+#           txt = map_chr(geometry, st_as_text)) %>%
+ #   filter(str_detect(txt, "POLYGON")) %>% #fasterize borks otherwise
+ #   dplyr::select(-txt)
 
   #if it's all empty, create an empty raster
   #using subject as the bbox
@@ -120,13 +127,13 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
 # 
 # # set.seed(5000)
 #  levs <- unique(sf_objects[[1]]$subject_ids) %>% sample(10, replace=FALSE)
-# # 
+# #
 #  test <- sf_objects[[1]] %>%
-#    filter(subject_ids %in% 15118293)
+#    filter(subject_ids %in% 15117482)
 # # filter(subject_ids %in% levs)
 #  #
 # test_rast <- map(split(test, test$subject_ids), rasterize_one_subject)
-# 
+
 
 #filter out any tiles already done
 done_tiles <- list.files(write_dir) %>%
