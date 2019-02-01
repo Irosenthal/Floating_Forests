@@ -105,8 +105,13 @@ cat("Filtering done tiles...\n")
 done_tiles <- list.files(str_c(write_dir, "sf_tiles/")) %>%
   str_replace("\\.Rds", "")
 
-raster_tiles_filtered <- raster_tiles %>%
-  discard(str_detect(., done_tiles))
+#if some are done...
+if(length(done_tiles)>0){
+  raster_tiles_filtered <- raster_tiles %>%
+    discard(str_detect(., done_tiles))
+}else{
+  raster_tiles_filtered <- done_tiles
+}
 
 #make the consensus polygon tiles
 #install furrr from github for future_walk instead
