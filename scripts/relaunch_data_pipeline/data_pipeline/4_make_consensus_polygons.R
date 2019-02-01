@@ -101,6 +101,7 @@ make_threshold_polys_from_tilepath <- function(tile_path, max_threshold = 13, wr
 
 
 #filter out any tiles already done
+cat("Filtering done tiles...\n")
 done_tiles <- list.files(str_c(write_dir, "sf_tiles/")) %>%
   str_replace("\\.Rds", "")
 
@@ -110,6 +111,7 @@ raster_tiles_filtered <- raster_tiles %>%
 #make the consensus polygon tiles
 #install furrr from github for future_walk instead
 if(length(raster_tiles_filtered)>0){
+  cat("Making consensus polygons...\n")
   consensus_tiles <- future_walk(raster_tiles_filtered, make_threshold_polys_from_tilepath, 
                        write_dir = write_dir, .progress=TRUE)
 }else{
