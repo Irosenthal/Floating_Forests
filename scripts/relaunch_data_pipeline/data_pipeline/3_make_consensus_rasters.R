@@ -69,9 +69,14 @@ st_remove_points <- function(x){
 
   #in case there was nothing
   if(sum(geom_pieces) == 0) return(st_multipolygon())
+  
+  #in case it's 1 polygon
+  valid_geom <- valid_geom[geom_pieces][[1]]
+  if(!("MULTIPOLYGON" %in% class(valid_geom)))
+    valid_geom <- st_cast(valid_geom, "MULTIPOLYGON")
      
   #  return( st_geometrycollection(valid_geom[geom_pieces]) )
-    return( valid_geom[geom_pieces][[1]]) 
+    return(valid_geom) 
 }
 
 rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
@@ -131,7 +136,7 @@ rasterize_one_subject <- function(one_subject, res = 10, write_out_tile = TRUE){
 #  levs <- unique(sf_objects[[1]]$subject_ids) %>% sample(10, replace=FALSE)
 # #
 #  test <- sf_objects[[1]] %>%
-# #   filter(subject_ids %in% 15117522)
+#   # filter(subject_ids %in% 15117528)
 #  filter(subject_ids %in% levs)
 # 
 # test_rast <- map(split(test, test$subject_ids), rasterize_one_subject)
