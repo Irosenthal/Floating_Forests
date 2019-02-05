@@ -118,7 +118,7 @@ if(length(done_tiles)>0){
 if(length(raster_tiles_filtered)>0){
   cat("Making consensus polygons...\n")
   consensus_tiles <- future_walk(raster_tiles_filtered, make_threshold_polys_from_tilepath, 
-                       write_dir = write_dir, .progress=TRUE)
+                       write_dir = write_dir)
 }else{
   cat("No consensus rasters to parse\n")
 }
