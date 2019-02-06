@@ -63,7 +63,14 @@ make_threshold_polygons <- function(a_rast, max_threshold = 13){
 
   #unionize into sfg objects by threshold
   out_union <-  map(out_polys, st_union)
-
+  gc() #to clear memory
+  #debug fail in st_union
+  # suntion <- function(x, y){
+  #   print(y)
+  #   st_union(x)
+  # }
+  # out_union <-  imap(out_polys, suntion)
+  
   #make into sf object
   op_mp <- out_union %>%
     do.call(c, .) %>%
@@ -83,6 +90,8 @@ make_threshold_polys_from_tilepath <- function(tile_path, max_threshold = 13, wr
   #debug
   tic()
   cat("Starting to polygonize ", subj_id, "...\n")
+  write(str_c("Starting to polygonize ", subj_id, "... \n"), file = "sf_debug.txt",
+        append = TRUE)
   
   thresh_sf <- make_threshold_polygons(a_rast, max_threshold = max_threshold) %>%
     mutate(subject_id = subj_id)
