@@ -18,7 +18,8 @@ plan(multiprocess)
 
 #the relevant directories
 read_dir <- "../../../data/relaunch_data/level_0/sf_tiles"
-write_dir <-  "../../../figures/relaunch_viz/"
+write_fig_dir <-  "../../../figures/relaunch_viz/"
+write_data_dir <-  "../../../data/relaunch_data/level_0/"
 
 files <- list.files(read_dir, full.names=TRUE)[1:10]
 
@@ -51,6 +52,8 @@ utm_sf <- utm_sf[(names(utm_sf)!="NA")]
 #combine pieces
 merged_utms <- map(utm_sf,
                    ~reduce(.x, rbind))
+
+saveRDS(merged_utms, str_c(write_data_dir, "merged_sf_tiles.Rds"))
 
 ggplot(merged_utms[[1]] %>% filter(threshold>4)) +
   geom_sf(aes(fill = factor(threshold)))
