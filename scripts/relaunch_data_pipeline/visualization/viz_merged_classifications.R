@@ -21,7 +21,7 @@ read_dir <- "../../../data/relaunch_data/level_0/sf_tiles"
 write_fig_dir <-  "../../../figures/relaunch_viz/"
 write_data_dir <-  "../../../data/relaunch_data/level_0/"
 
-files <- list.files(read_dir, full.names=TRUE)[1:10]
+files <- list.files(read_dir, full.names=TRUE)
 
 #read in the files
 sf_files <- map(files, readRDS)
