@@ -57,3 +57,5 @@ saveRDS(merged_utms, str_c(write_data_dir, "merged_sf_tiles.Rds"))
 
 ggplot(merged_utms[[1]] %>% filter(threshold>4)) +
   geom_sf(aes(fill = factor(threshold)))
+
+ggsave(str_c(write_fig_dir, "threshold_4_utm_20.jpg"))
