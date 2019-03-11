@@ -7,10 +7,13 @@
 
 
 #load libraries
+library(raster)
 library(tidyverse)
 library(furrr)
 library(readr)
 library(sf)
+library(spex)
+library(fasterize)
 
 #setup multicore environment to use all cores available ####
 plan(multiprocess)
@@ -55,7 +58,45 @@ merged_utms <- map(utm_sf,
 
 saveRDS(merged_utms, str_c(write_data_dir, "merged_sf_tiles.Rds"))
 
+
 ggplot(merged_utms[[1]] %>% filter(threshold>4)) +
   geom_sf(aes(fill = factor(threshold)))
 
 ggsave(str_c(write_fig_dir, "threshold_4_utm_20.jpg"))
+
+
+## reproject and rasterize
+
+#read in falklands coastline
+merged_utms <- readRDS(str_c(write_data_dir, "merged_sf_tiles.Rds"))
+
+falklands <- st_read("../../../data/coastlines/falklands/Falklands.shp")
+merged_utms_filter <- map(merged_utms, ~filter(.x, threshold>=4))
+
+#fix s hemisphere landsat issue
+#add 1e7 to y
+merged_utms_filter_trans <- map(merged_utms_filter, ~.x %>% mutate(geometry = geometry+c(0,1e7)))
+
+for(i in 1:length(merged_utms_filter_trans)){
+  merged_utms_filter_trans[[i]] <- st_set_crs(merged_utms_filter_trans[[i]], st_crs(merged_utms_filter[[i]]))
+}
+
+merged_reproj <- map(merged_utms_filter_trans, st_transform, crs = st_crs(falklands))
+merged_reproj <- reduce(merged_reproj, rbind)
+
+#write out an intermediary....
+save(merged_reproj, file = str_c(write_data_dir, "reproj_falklands.Rds"))
+
+no_na_max <- function(x) max(x, na.rm=T)
+bbox2extent <- function(x){
+  b <- st_bbox(x)
+  extent(c(b[1], b[3], b[2], b[4]))
+}
+
+raster_templ <- raster(bbox2extent(merged_reproj), 
+                       crs = st_crs(merged_reproj),
+                       res = c(0.000115, 9.01e-05))
+
+combined_falklands_kelp <- fasterize(merged_reproj, raster = raster_templ, fun = no_na_max)
+
+writeRaster(combined_falklands_kelp, str_c(write_dir, "merged_falkands.tif"))
