@@ -1,7 +1,5 @@
 #' ##############################
-#' Separate classification, yes/no, 
-#' and other workflow data into separate 
-#' .Rds files
+#' Make aggregated sf objects of the
 #' 
 #' ##############################
 
@@ -94,6 +92,9 @@ latlong_sf <- future_map(merged_utms, st_transform, st_crs(f))
 #merge it all!
 merged_sf_latlong <- reduce(latlong_sf, rbind)
 
+#crop it!
+merged_sf_latlong <- st_difference(merged_sf_latlong, f)
+
 #save for future use
 saveRDS(merged_sf_latlong, str_c(write_data_dir, "merged_sf_latlong.Rds"))
 
@@ -120,6 +121,8 @@ all_annual_kelp_sf <- merged_sf_latlong_dates %>%
   summarize()
 
 saveRDS(all_annual_kelp_sf, str_c(write_data_dir, "all_annual_kelp_sf.Rds"))
+#all_annual_kelp_sf$area <- st_area(all_annual_kelp_sf)
+#ggplot(all_annual_kelp_sf, aes(x = Year, y = as.numeric(area), color = factor(threshold))) + geom_line()
 
 
 #' ---------------------------------------------------------
@@ -131,6 +134,22 @@ all_annual_kelp_seasonal <- merged_sf_latlong_dates %>%
 
 saveRDS(all_annual_kelp_seasonal, str_c(write_data_dir, "all_annual_kelp_seasonal.Rds"))
 
+#all_annual_kelp_seasonal$area <- st_area(all_annual_kelp_seasonal)
+#ggplot(all_annual_kelp_seasonal, aes(x = Season, y = as.numeric(area), color = factor(threshold))) + geom_line()
+
+
+#' ---------------------------------------------------------
+# Make merged shapefiles by decade and threshold ####
+#' ---------------------------------------------------------
+all_annual_kelp_decadal<- merged_sf_latlong_dates %>%
+  mutate(Decade = floor(Year/10)*10) %>%
+  group_by(threshold, Decade) %>%
+  summarize()
+
+#all_annual_kelp_decadal$area <- st_area(all_annual_kelp_decadal)
+#ggplot(all_annual_kelp_decadal, aes(x = Decade, y = area, color = factor(threshold))) + geom_line()
+
+saveRDS(all_annual_kelp_seasonal, str_c(write_data_dir, "all_annual_kelp_decadal.Rds"))
 
 
 #' ---------------------------------------------------------
@@ -139,20 +158,21 @@ saveRDS(all_annual_kelp_seasonal, str_c(write_data_dir, "all_annual_kelp_seasona
 all_annual_kelp_by_season <- merged_sf_latlong_dates %>%
   mutate(Season = str_replace(Season, "([0-9]+\\.)([1-4])$", "\\2"),
          Season = fct_recode(factor(Season), 
-                             Winter = "1", Spring = "2", Summer = "3", Fall="4")) %>%
+       #                      Winter = "1", Spring = "2", Summer = "3", Fall="4")) %>%
+       `Austral Summer` = "1", `Austral Fall` = "2", `Austral Winter` = "3", `Austral Spring`="4")) %>%
   group_by(threshold, Season) %>%
   summarize()
 
 saveRDS(all_annual_kelp_by_season, str_c(write_data_dir, "all_annual_kelp_by_season.Rds"))
 # 
 # 
-library(ggplot)
+library(ggplot2)
 
 jpeg(str_c(write_fig_dir, "season_test.jpg"), width = 1024, height = 768)
 ggplot(all_annual_kelp_by_season %>% filter(threshold==6)) +
   geom_sf() +
   facet_wrap(~Season) +
-  theme_bw()
+  theme_map(base_size = 18)
 dev.off()
 # 
 # #project a_file to map
@@ -167,24 +187,24 @@ dev.off()
 # plot(patch["threshold"], axes=T, key.pos = NULL, reset = FALSE,
 #      xlim = c(-58.32532, -58.19128), ylim = c( -51.41614, -51.36322), add=TRUE)
 # 
-# #test with leaflet
-# library(leaflet)
-# 
-# pal <- colorNumeric(
-#   palette = "YlGnBu",
-#   domain = merged_sf_latlong$threshold
-# )
-# 
-# leaflet(all_kelp_sf %>% filter(threshold==7)) %>%
-#   #  addTiles() %>%
-#   addProviderTiles(providers$Stamen.Terrain) %>%
-#   addPolygons(fillColor = ~pal(threshold),
-#               color = ~pal(threshold),
-#               opacity = 1.0, fillOpacity = 1.0)%>%
-#   addLegend("bottomright", pal =pal, values = ~threshold,
-#             title = "# of Users",
-#             opacity = 1
-#   )
-# 
+#test with leaflet
+library(leaflet)
+
+pal <- colorNumeric(
+  palette = "YlGnBu",
+  domain = merged_sf_latlong$threshold
+)
+
+leaflet(all_kelp_sf %>% filter(threshold==7)) %>%
+  #  addTiles() %>%
+  addProviderTiles(providers$Stamen.Terrain) %>%
+  addPolygons(fillColor = ~pal(threshold),
+              color = ~pal(threshold),
+              opacity = 1.0, fillOpacity = 1.0)%>%
+  addLegend("bottomright", pal =pal, values = ~threshold,
+            title = "# of Users",
+            opacity = 1
+  )
+
 # 
 # 
