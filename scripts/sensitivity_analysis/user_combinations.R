@@ -43,7 +43,41 @@ user_combos <- create_user_combos_row(one_tile_sf)
 #to link with polys, do an if in statement?
 
 
-#take that list of user combos and map some function across them
-#this works and i don't know why
-map_dbl(users, ~sum(mydf$num[mydf$users %in% .x]))
+
+
+
+
+
+#
+group_by
+summarise(geometry = st_union(geometry)) 
+  
+#do I even want st_union? I think I Just want to make a multipolygon?
+
+
+
+
+
+
+#convert to a raster - will need for MCC
+#make user_name a factor to be used with fasterize
+one_tile_sf$user_name <- as.factor(one_tile_sf$user_name) 
+
+
+r <- fasterize(one_tile_sf, #give it an SF
+               raster(one_tile_sf, nrows = 400, ncols = 364), #and a template for the raster
+               field = "user_name", #must be a factor (bug?)
+               fun = "count")
+plot(r)
+
+#check if FF_methods functions still work
+getKelpPixelsFromRaster(r)
+getKelpPixelsFromRaster(r, 2)
+getKelpPixelsFromRaster(r, 12)
+getKelpPixelsFromRaster(r, 13)
+#they do
+
+
+
+
 
