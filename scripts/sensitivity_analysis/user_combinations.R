@@ -3,30 +3,27 @@ library(tidyverse)
 #load and filter
 classifications <- read_rds("../../data/output/raw_data_pipeline/sp_classifications_df_zone_10.rds")
 library(sf)
-#filter to tile we care about
+library(tidyverse)
 
-spdf_one_tile <- classifications$SPDF$AKP00016e6
-spdf_one_tile_data <- spdf_one_tile@data
-spdf_one_tile_polys <- spdf_one_tile@polygons
-spdf_one_tile_df <- as.data.frame(spdf_one_tile)
 
-##### sf conversion 
-#this works - just need to go utm > ll > sf
-spdf_one_tile_ll <- spTransform(spdf_one_tile, CRS("+proj=longlat +datum=WGS84"))
-one_tile_sf = st_as_sf(spdf_one_tile_ll, "sf")
+#filter to one tile and convert to sf
 
-#100  numbers between 1 and 15
+one_tile_sf <- classifications$SPDF$AKP00016e6 %>%
+  #go from UTM to LL
+  spTransform(CRS("+proj=longlat +datum=WGS84")) %>%
+  #convert to sf
+  st_as_sf(classifications, "sf")
+
+#clean up environment
+rm(classifications)
+
+
+#100 numbers between 1 and 15
 #n <- round(runif(100, 1, 12)) #random
-n <- rep(1:nrow(one_tile_sf), each = 5)
-#users <- letters[1:12] #fake users
-#value <- round(runif(15, 1, 10))
-
-#now pick 100 combos of users, n random ones each
-#to make a vector of n random users
+n <- rep(1:nrow(one_tile_sf), each = 5) #uniform
 
 #function to generate user combos, given an sf object
 #outputs number of users in combination as well as row numbers of each randomly selected user
-
 
 create_user_combos <- function(sf_data){
   n <- rep(1:nrow(sf_data), each = 5)
@@ -38,22 +35,17 @@ create_user_combos <- function(sf_data){
     as_tibble()
 }
 
-user_combos <- create_user_combos_row(one_tile_sf)
-
-#to link with polys, do an if in statement?
-
+user_combos <- create_user_combos(one_tile_sf)
+user_combos$combination <- as.numeric()
 
 
 
+#find polygons based on these lists
+#unique group identifier?
+#mutate a new column?
 
-
-
-#
-group_by
-summarise(geometry = st_union(geometry)) 
-  
-#do I even want st_union? I think I Just want to make a multipolygon?
-
+#have it apply a filter to main sf and then spit out an sf for each combo?
+#mutate(new_col = oldsf[user_rows,])
 
 
 
