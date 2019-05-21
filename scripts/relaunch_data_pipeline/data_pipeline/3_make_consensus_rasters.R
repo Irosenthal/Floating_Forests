@@ -14,6 +14,7 @@ library(purrr)
 library(furrr)
 library(lwgeom)
 library(stringr)
+setwd(here::here())
 
 options(stringsAsFactors = FALSE)
 
