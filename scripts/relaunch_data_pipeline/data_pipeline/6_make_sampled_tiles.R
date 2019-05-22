@@ -111,6 +111,18 @@ print( str_c(write_dir, "level_1/coverage_merged_seasonal_annual.Rds"))
 saveRDS(coverage_merged_seasonal_annual, 
         str_c(write_dir, "level_1/coverage_merged_seasonal_annual.Rds"))
 
+#make proper filter
+filter_for_valid_subjects <- coverage_merged_seasonal_annual %>%
+  filter(retirement_reason %in% c("classification_count", "consensus", 
+                                  "nothing_here", "NA")) %>%
+  group_by(Year, Season) %>%
+  summarize()
+  
+print( str_c(write_dir, "level_1/filter_for_valid_subjects.Rds"))
+aveRDS(filter_for_valid_subjects, 
+          str_c(write_dir, "level_1/filter_for_valid_subjects.Rds"))
+  
+
 #group by season
 coverage_merged_seasonal <- coverage_merged_seasonal_annual %>%
   st_make_valid() %>%
