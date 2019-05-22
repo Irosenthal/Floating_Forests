@@ -113,6 +113,7 @@ saveRDS(coverage_merged_seasonal_annual,
 
 #group by season
 coverage_merged_seasonal <- coverage_merged_seasonal_annual %>%
+  st_make_valid() %>%
   group_by(Season, retirement_reason) %>%
   summarize()
 
