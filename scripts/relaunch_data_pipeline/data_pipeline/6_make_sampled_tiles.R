@@ -5,6 +5,7 @@
 
 library(tidyverse)
 library(sf) 
+library(lwgeom)
 library(ggplot2)
 
 
@@ -13,7 +14,7 @@ source("./_pipeline_functions.R")
 f <- st_read("../../../data/coastlines/falklands/Falklands.shp")
 
 read_dir <-  "../../../data/relaunch_data/"
-write_dir <- "../../../data/relaunch_data/level_0/"
+write_dir <- "../../../data/relaunch_data/"
 
 landsat_fix <- function(x) x + 1e07
 
@@ -88,40 +89,46 @@ make_sfc_from_zoo <- function(a_tibble){
     
 }
 
+#Make a list of all sampled tiles
 all_subj_list_sf_list <- map(all_subj_list, make_sfc_from_zoo)
 
-saveRDS(all_subj_list_sf_list, str_c(write_dir, "all_subj_list_sf_list.Rds"))
+print( str_c(write_dir, "level_0/all_subj_list_sf_list.Rds"))
+saveRDS(all_subj_list_sf_list, str_c(write_dir, "level_0/all_subj_list_sf_list.Rds"))
 
 all_subj_list_sf_latlong <- map(all_subj_list_sf_list, 
                                         ~st_transform(.x, crs = st_crs(f))) %>%
   reduce(rbind)
 
-saveRDS(all_subj_list_sf_latlong, str_c(write_dir, "all_subj_list_sf_latlong.Rds"))
+print( str_c(write_dir, "level_0/all_subj_list_sf_latlong.Rds"))
+saveRDS(all_subj_list_sf_latlong, str_c(write_dir, "level_0/all_subj_list_sf_latlong.Rds"))
 
 #group by season/year
 coverage_merged_seasonal_annual <- all_subj_list_sf_latlong %>%
   group_by(Year, Season, retirement_reason) %>%
   summarize()
 
+print( str_c(write_dir, "level_1/coverage_merged_seasonal_annual.Rds"))
 saveRDS(coverage_merged_seasonal_annual, 
-        str_c(write_dir, "../level_1/coverage_merged_seasonal_annual.Rds"))
+        str_c(write_dir, "level_1/coverage_merged_seasonal_annual.Rds"))
 
 #group by season
 coverage_merged_seasonal <- coverage_merged_seasonal_annual %>%
   group_by(Season, retirement_reason) %>%
   summarize()
 
+print(str_c(write_dir, "level_1/coverage_merged_seasonal.Rds"))
 saveRDS(coverage_merged_seasonal, 
-        str_c(write_dir, "../level_1/coverage_merged_seasonal.Rds"))
+        str_c(write_dir, "level_1/coverage_merged_seasonal.Rds"))
 
 
-#group by season/year
+#group by year
 coverage_merged_annual <- coverage_merged_seasonal_annual %>%
   group_by(Year, retirement_reason) %>%
   summarize()
 
+print(str_c(write_dir, "level_1/coverage_merged_annual.Rds"))
 saveRDS(coverage_merged_annual, 
-        str_c(write_dir, "../level_1/coverage_merged_annual.Rds"))
+        str_c(write_dir, "level_1/coverage_merged_annual.Rds"))
 
 
 # #check
@@ -141,24 +148,27 @@ saveRDS(coverage_merged_annual,
 #check by season
 by_season <- ggplot() +
   geom_sf(data = coverage_merged_seasonal, mapping = aes(fill = retirement_reason)) +
-  facet_wrap(~Season) +
+  facet_grid(retirement_reason ~ Season) +
   geom_sf(data = f, fill = "darkgreen", alpha = 0.8) +
-  theme_void(base_line_size=0) 
+  theme_void(base_line_size=0, base_size = 14) +
+  theme(panel.grid.major = element_line(colour = 'transparent'))
   
 
-jpeg("../../../figures/relaunch_viz/coverage_by_season.jpg")
+jpeg("../../../figures/relaunch_viz/coverage/coverage_by_season.jpg",
+     width = 2048, height = 1536)
 by_season
 dev.off()
 #check by year
 
 by_year <- ggplot() +
   geom_sf(data = coverage_merged_annual, mapping = aes(fill = retirement_reason)) +
-  facet_wrap(~Year) +
+  facet_grid(retirement_reason~Year) +
   geom_sf(data = f, fill = "darkgreen", alpha = 0.8) +
-  theme_void(base_line_size = 0) +
-  theme(panel.grid.major =  element_blank())
+  theme_void(base_line_size=0, base_size = 14) +
+  theme(panel.grid.major = element_line(colour = 'transparent'))
 
-jpeg("../../../figures/relaunch_viz/coverage_by_year.jpg")
+jpeg("../../../figures/relaunch_viz/coverage/coverage_by_year.jpg",
+     width = 2048, height = 1536)
 by_year
 dev.off()
 
@@ -166,12 +176,13 @@ dev.off()
 by_year_season <- ggplot() +
   geom_sf(data = coverage_merged_seasonal_annual, 
           mapping = aes(fill = retirement_reason)) +
-  facet_grid(Season~Year) +
+  facet_grid(retirement_reason + Season~Year) +
   geom_sf(data = f, fill = "darkgreen", alpha = 0.8) +
-  theme_void(base_line_size = 0) +
-  theme(panel.grid.major =  element_blank())
+  theme_void(base_line_size=0, base_size = 14) +
+  theme(panel.grid.major = element_line(colour = 'transparent'))
 
-jpeg("../../../figures/relaunch_viz/coverage_by_year_season.jpg")
+jpeg("../../../figures/relaunch_viz/coverage/coverage_by_year_season.jpg",
+     width = 2048, height = 1536)
 by_year_season
 dev.off()
 
