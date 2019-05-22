@@ -114,7 +114,7 @@ saveRDS(coverage_merged_seasonal_annual,
 #make proper filter
 filter_for_valid_subjects <- coverage_merged_seasonal_annual %>%
   filter(retirement_reason %in% c("classification_count", "consensus", 
-                                  "nothing_here", "No Water", "NA")) %>%
+                                  "nothing_here", "NA")) %>%
   group_by(Year, Season) %>%
   summarize()
   
