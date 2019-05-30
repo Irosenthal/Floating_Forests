@@ -28,76 +28,58 @@ create_user_combos <- function(sf_data){
     mutate(replicate = rep(1:5, len = 60))
 }
 
-#given a subject, generate user combinations
+ #given a subject, generate user combinations
 user_combos <- create_user_combos(one_subject)
 
-####stepwise workflow - need to convert to function
-user_combos[20,]
 
-#convert list element to vector of row numbers
-#this is an arbitrary row, should go down list stepwise when automated
-combo_vec <- unlist(user_combos[20,]$combination)
-user_combos <- unite(user_combos, n_replicate, c("n", "replicate"), sep = "_", remove = FALSE)
-#find the matching rows in classification data
-combo_classifications <- one_subject %>%
-  slice(combo_vec) 
-#find n_replicate that matches
-rep_info <- user_combos %>%
-  filter(unlist(user_combos$combination) == combo_vec)
-
-#rasterize these rows
-r <- fasterize(combo_classifications,
-          raster(one_subject, nrows = 400, ncols = 364), #and a template for the raster
-          field = "user_name", #must be a factor (bug?)
-          fun = "count")
-#check it out
-plot(r)
-########
-
-#now as a function
-
-
-
-#given a subject, make combos
-aggregate_user_combos <- function(combos_one_sub){
+#given a set of combinations
+aggregate_user_combos <- function(n, combination, replicate){
   #make a list of user combos
-  combo_vec <- unlist(combos_one_sub)
+  combo_vec <- unlist(combination)
   print(combo_vec)
   #find the matching rows in classification data
   combo_classifications <- one_subject %>%
-    slice(combo_vec)
+    slice(combo_vec) %>%
+    #add n and rep to data
+    mutate(n = n, rep = replicate)
+  combo_classifications
 }
 
+combined_geom_list <- pmap(user_combos, aggregate_user_combos) 
 
-combined_geom_list <- map(user_combos[[3]], aggregate_user_combos)
-
-#this actually works and creates a big list of all combinations for one scene.
 #take this list and iterate the rasterization code across it
+
+#set write out directory
 write_dir <- "../../data/output/raw_data_pipeline/level_1/min_combo_tiles/"
 
+one_combo <- combined_geom_list[1]
 rasterize_user_combos <- function(one_combo){
   ID <- one_combo$subject_zooniverse_id[1]
-  print(ID)
-  
+  n <- one_combo$n[1]
+  replicate <- one_combo$rep[1]
+  print(str_c("Rasterizing subject ", ID, ", threshold: ", n, ", replicate: ", replicate))
   rast <- fasterize(one_combo,
                     raster(one_combo, nrows = 400, ncols = 364),
                     field = "user_name",
                     fun = "count")
   
-  filename <- str_c(write_dir, ID,  ".grd")
+  filename <- str_c(write_dir, ID, "_", n, "_", replicate,  ".grd")
   #print(str_c("Writing subject ", ID, " to ", filename))
   writeRaster(rast, filename, overwrite = TRUE)
 }
 
 # this almost works. need to give each replicate a unique ID for file naming
-#added ID fields to user combo table, need to carry through
 
 test_map <- map(combined_geom_list, rasterize_user_combos)
+
+
+
+
 
 #is this working?
 test_rast <- test_map[[20]]
 
-plot(combined_geom_list[[20]])
-plot(test_map[[20]])
+plot(combined_geom_list[[10]])
+plot(test_map[[40]])
 
 plot(st_as_sf(test_rast))
