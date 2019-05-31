@@ -84,21 +84,8 @@ rasterize_user_combos <- function(one_combo){
   writeRaster(rast, filename, overwrite = TRUE)
 }
 
-# this almost works. need to give each replicate a unique ID for file naming
 
-test_map <- map(combined_geom_list, rasterize_user_combos)
-
-
-
-#is this working?
-test_rast <- test_map[[20]]
-
-plot(combined_geom_list[[10]])
-plot(test_map[[40]])
-
-plot(st_as_sf(test_rast))
-
-
+rast_out <- map(combined_geom_list, rasterize_user_combos)
 
 
 ############
