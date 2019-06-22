@@ -23,7 +23,8 @@ write_dir <-  "../../../data/relaunch_data/level_0/"
 
 
 #read relaunch data
-ff_relaunch <- read_csv(str_c(read_dir, "floating-forests-classifications.csv"),
+ff_relaunch <- read_csv(str_c(read_dir, 
+                              "floating-forests-classifications.csv"),
                          col_types="icicicdcccccci") %>%
    mutate(created_at = lubridate::parse_date_time(created_at, orders="ymdHMS"))
  
@@ -37,7 +38,9 @@ ff_relaunch_subjects <- read_csv(str_c(read_dir, "floating-forests-subjects-2019
     locations = map(locations, fromJSON)) %>%  
   unnest(locations) %>%
   mutate(locations = unlist(locations)) %>%  
-  unnest(metadata)
+  unnest(metadata) %>%
+  select(-starts_with("V")) %>%
+  select(-id)
 
 
 # To deal with data from when we worked on the beta of the site
