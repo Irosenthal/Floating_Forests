@@ -30,9 +30,10 @@ ff_relaunch <- read_csv(str_c(read_dir, "floating-forests-classifications.csv"),
 #read subjects and deparse JSON 
 cat("Processing subjects...\n")
 
-ff_relaunch_subjects <- read_csv(str_c(read_dir, "floating-forests-subjects-2018-12-12.csv")) %>% 
+ff_relaunch_subjects <- read_csv(str_c(read_dir, "floating-forests-subjects-2019-06-22.csv")) %>% 
   mutate(
-    metadata = map(metadata, ~fromJSON(.x) %>% as_tibble),
+    metadata = map(metadata, ~fromJSON(.x) %>% 
+                     as_tibble(.name_repair = "minimal")),
     locations = map(locations, fromJSON)) %>%  
   unnest(locations) %>%
   mutate(locations = unlist(locations)) %>%  
@@ -56,7 +57,7 @@ ff_relaunch <- ff_relaunch %>%
 #although really only works for
 #well behaved JSON
 flatten_json <- . %>%
-  fromJSON(.) %>% 
+  fromJSON() %>% 
   purrr::flatten() %>% 
   map(~ifelse(is.null(.x), NA, .x)) %>%
   as_tibble
