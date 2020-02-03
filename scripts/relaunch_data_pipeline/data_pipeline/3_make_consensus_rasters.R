@@ -17,6 +17,7 @@ library(stringr)
 setwd(here::here())
 
 options(stringsAsFactors = FALSE)
+options(future.globals.maxSize = 850*1024^2)
 
 #setup multicore environment to use all cores available ####
 plan(multiprocess)
