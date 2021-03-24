@@ -31,10 +31,10 @@ ff_relaunch_classifications <- readRDS(str_c(read_dir, "floating_forests_classif
 ff_relaunch_subjects <- readRDS(str_c(read_dir, "ff_relaunch_subjects.rds"))
 
 #make a test data set
-set.seed(5000)
-levs <- unique(ff_relaunch_classifications$subject_ids) %>% sample(10, replace=FALSE)
-ff_test <- ff_relaunch_classifications %>%
-  filter(subject_ids %in% levs)
+#set.seed(5000)
+#levs <- unique(ff_relaunch_classifications$subject_ids) %>% sample(10, replace=FALSE)
+#ff_test <- ff_relaunch_classifications %>%
+#  filter(subject_ids %in% levs)
 
 
 #a function to make sure the polygons are closed
